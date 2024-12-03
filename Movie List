@@ -1,0 +1,99 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => MovieProvider(),
+      child: MaterialApp(
+        title: 'Movie List',
+        home: MovieListScreen(),
+      ),
+    );
+  }
+}
+
+class Movie {
+  final String title;
+  final bool isWatched;
+
+  Movie({required this.title, this.isWatched = false});
+}
+
+class MovieProvider with ChangeNotifier {
+  List<Movie> _movies = [];
+
+  List<Movie> get movies => _movies;
+
+  void addMovie(String title) {
+    _movies.add(Movie(title: title));
+    notifyListeners();
+  }
+
+  void toggleWatched(int index) {
+    _movies[index] = Movie(
+      title: _movies[index].title,
+      isWatched: !_movies[index].isWatched,
+    );
+    notifyListeners();
+  }
+}
+
+class MovieListScreen extends StatelessWidget {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    final movieProvider = Provider.of<MovieProvider>(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Movie List'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                labelText: 'Movie Title',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: () {
+                    if (_controller.text.isNotEmpty) {
+                      movieProvider.addMovie(_controller.text);
+                      _controller.clear();
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: movieProvider.movies.length,
+              itemBuilder: (context, index) {
+                final movie = movieProvider.movies[index];
+                return ListTile(
+                  title: Text(movie.title),
+                  trailing: Checkbox(
+                    value: movie.isWatched,
+                    onChanged: (value) {
+                      movieProvider.toggleWatched(index);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
